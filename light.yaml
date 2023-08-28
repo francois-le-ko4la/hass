@@ -1,6 +1,6 @@
 blueprint:
-  name: Allumer progressivement les lumières au coucher du soleil
-  description: Allume progressivement les lumières en fonction du coucher du soleil avec choix de couleur ou température de blanc.
+  name: Allumer progressivement les lumières en blanc chaud au coucher du soleil
+  description: Allume progressivement les lumières en blanc chaud en fonction du coucher du soleil.
   domain: automation
   input:
     lights:
@@ -18,30 +18,6 @@ blueprint:
           min: 1
           max: 120
           step: 1
-    color_option:
-      name: Option de couleur
-      description: Choisissez entre "couleur" ou "température de blanc".
-      default: color
-      selector:
-        select:
-          options:
-            - color
-            - white_temp
-    color:
-      name: Couleur
-      description: Couleur à utiliser pour l'allumage progressif (si l'option "couleur" est sélectionnée).
-      default: "#FF5733"  # Exemple de couleur orange
-      selector:
-        color: {}
-    white_temp:
-      name: Température de blanc
-      description: Température de blanc à utiliser pour l'allumage progressif (si l'option "température de blanc" est sélectionnée).
-      default: 350  # Exemple de température de blanc
-      selector:
-        number:
-          min: 150
-          max: 500
-          step: 10
 
 trigger:
   platform: sun
@@ -54,8 +30,4 @@ action:
       entity_id: !input lights
     data_template:
       brightness_pct: "{{ (100 / (states.input_number.duration.state | float)) * (now().timestamp() - state_attr('sun.sun', 'next_setting') | float) / 60 }}"
-      {% if is_state_attr('input_select.color_option', 'state', 'color') %}
-      rgb_color: [{{ (states.input_color.color.attributes.rgb_color[0] | int) }}, {{ (states.input_color.color.attributes.rgb_color[1] | int) }}, {{ (states.input_color.color.attributes.rgb_color[2] | int) }}]
-      {% else %}
-      color_temp: "{{ states.input_number.white_temp.state | int }}"
-      {% endif %}
+      color_temp: 370  # Température de blanc chaud par défaut

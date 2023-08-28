@@ -1,6 +1,6 @@
 blueprint:
   name: Allumer progressivement les lumières au coucher du soleil
-  description: Allume progressivement les lumières en fonction du coucher du soleil avec des couleurs personnalisées ou de la lumière blanche.
+  description: Allume progressivement les lumières en fonction du coucher du soleil avec choix de couleur ou température de blanc.
   domain: automation
   input:
     lights:
@@ -20,28 +20,28 @@ blueprint:
           step: 1
     color_option:
       name: Option de couleur
-      description: Choisissez entre "couleurs personnalisées" ou "lumière blanche".
-      default: custom_colors
+      description: Choisissez entre "couleur" ou "température de blanc".
+      default: color
       selector:
         select:
           options:
-            - custom_colors
-            - white_light
-    colors:
-      name: Couleurs personnalisées
-      description: Liste des couleurs à utiliser pour l'allumage progressif (si l'option "couleurs personnalisées" est sélectionnée).
+            - color
+            - white_temp
+    color:
+      name: Couleur
+      description: Couleur à utiliser pour l'allumage progressif (si l'option "couleur" est sélectionnée).
+      default: "#FF5733"  # Exemple de couleur orange
       selector:
-        entity:
-          domain: light
-    brightness_white:
-      name: Luminosité de la lumière blanche
-      description: Luminosité de la lumière blanche (si l'option "lumière blanche" est sélectionnée).
-      default: 100
+        color: {}
+    white_temp:
+      name: Température de blanc
+      description: Température de blanc à utiliser pour l'allumage progressif (si l'option "température de blanc" est sélectionnée).
+      default: 350  # Exemple de température de blanc
       selector:
         number:
-          min: 1
-          max: 100
-          step: 1
+          min: 150
+          max: 500
+          step: 10
 
 trigger:
   platform: sun
@@ -49,23 +49,13 @@ trigger:
   offset: "-00:30:00"
 
 action:
-  - choose:
-      - conditions:
-          - condition: template
-            value_template: "{{ is_state_attr('input_select.color_option', 'state', 'custom_colors') }}"
-        sequence:
-          - service: light.turn_on
-            target:
-              entity_id: !input lights
-            data_template:
-              brightness_pct: "{{ (100 / (states.input_number.duration.state | float)) * (now().timestamp() - state_attr('sun.sun', 'next_setting') | float) / 60 }}"
-              rgb_color: [255, 0, 0]  # Exemple de couleur rouge
-      - conditions:
-          - condition: template
-            value_template: "{{ is_state_attr('input_select.color_option', 'state', 'white_light') }}"
-        sequence:
-          - service: light.turn_on
-            target:
-              entity_id: !input lights
-            data_template:
-              brightness_pct: "{{ state('input_number.brightness_white') }}"
+  - service: light.turn_on
+    target:
+      entity_id: !input lights
+    data_template:
+      brightness_pct: "{{ (100 / (states.input_number.duration.state | float)) * (now().timestamp() - state_attr('sun.sun', 'next_setting') | float) / 60 }}"
+      {% if is_state_attr('input_select.color_option', 'state', 'color') %}
+      rgb_color: [{{ (states.input_color.color.attributes.rgb_color[0] | int) }}, {{ (states.input_color.color.attributes.rgb_color[1] | int) }}, {{ (states.input_color.color.attributes.rgb_color[2] | int) }}]
+      {% else %}
+      color_temp: "{{ states.input_number.white_temp.state | int }}"
+      {% endif %}

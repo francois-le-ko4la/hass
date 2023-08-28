@@ -38,5 +38,5 @@ action:
     target:
       entity_id: !input lights
     data_template:
-      brightness_pct: "{{ (states.input_number.max_brightness.state | int) * (100 / (states.input_number.duration.state | float)) * (now().timestamp() - state_attr('sun.sun', 'next_setting') | float) / 60 / 100 }}"
+      brightness_pct: "{{ (states('input_number.max_brightness') | int / 100) * (100 / (states('input_number.duration') | float)) * (now().timestamp() - state_attr('sun.sun', 'next_setting') | float) / 60 }}"
       color_temp: 370  # Température de blanc chaud par défaut

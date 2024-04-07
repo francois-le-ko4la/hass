@@ -1,0 +1,6 @@
+Zigbee2MQTT version: 1.36.1 commit: ffc2ff1
+Coordinator type: EmberZNet
+Coordinator revision: 7.4.1 [GA]
+Frontend version: 0.6.161
+zigbee_herdsman_converters_version: 19.11.2
+zigbee_herdsman_version: 0.40.3

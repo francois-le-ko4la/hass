@@ -1,0 +1,37 @@
+# File :/opt/hass/zigbee2mqtt/data/configuration.yaml
+homeassistant:
+  legacy_entity_attributes: false
+  legacy_triggers: false
+  status_topic: homeassistant/status
+permit_join: false
+frontend:
+  port: 8080
+mqtt:
+  base_topic: zigbee2mqtt
+  server: mqtt://172.21.0.3:1883
+  user: HappyMqtt
+  password: XXXXX
+  keepalive: 60
+  reject_unauthorized: true
+  version: 5
+serial:
+  port: /dev/ttyUSB0
+  adapter: ember
+advanced:
+  homeassistant_legacy_entity_attributes: false
+  legacy_api: false
+  legacy_availability_payload: false
+  log_level: error
+  log_syslog:
+    app_name: Zigbee2MQTT
+    eol: /n
+    host: localhost
+    localhost: localhost
+    path: /dev/log
+    pid: process.pid
+    port: 514
+    protocol: udp4
+    type: '5424'
+  channel: 15
+device_options:
+  legacy: false

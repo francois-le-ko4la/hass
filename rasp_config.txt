@@ -1,0 +1,23 @@
+# file: /boot/firmware/config.txt
+[all]
+kernel=vmlinuz
+cmdline=cmdline.txt
+initramfs initrd.img followkernel
+
+# Disable Bluetooth / WIFI...
+dtoverlay=disable-bt
+dtoverlay=disable-wifi
+dtparam=spi=off
+dtparam=i2c_arm=off
+dtparam=audio=off
+
+[pi4]
+arm_boost=1
+gpu_mem=16
+arm_64bit=1
+# dtoverlay=dwc2
+
+[cm4]
+# Enable the USB2 outputs on the IO board (assuming your CM4 is plugged into
+# such a board)
+# dtoverlay=dwc2,dr_mode=host

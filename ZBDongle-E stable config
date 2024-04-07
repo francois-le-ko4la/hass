@@ -4,3 +4,8 @@ Coordinator revision: 7.4.1 [GA]
 Frontend version: 0.6.161
 zigbee_herdsman_converters_version: 19.11.2
 zigbee_herdsman_version: 0.40.3
+
+DISTRIB_ID=Ubuntu
+DISTRIB_RELEASE=23.10
+DISTRIB_CODENAME=mantic
+DISTRIB_DESCRIPTION="Ubuntu 23.10"

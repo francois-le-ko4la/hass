@@ -66,7 +66,7 @@ MSG_EEPROM_UPDATE_REQUIRED="${MSG_EEPROM_PREFIX}${MSG_UPDATE_REQUIRED}"
 MSG_EEPROM_USER_VALIDATION="${MSG_EEPROM_PREFIX}${MSG_USER_VALIDATION}"
 MSG_EEPROM_USER_CANCELED="${MSG_EEPROM_PREFIX}${MSG_USER_CANCELED}"
 
-QUESTION_FMT="%sDo you want to update \"%s\" with the content of \"%s\" ?"
+QUESTION_FMT="Do you want to update \"%s\" with the content of \"%s\" ?"
 UPDT_FMT="File \"%s\" has been updated."
 
 CONF_EEPROM="[all]
@@ -213,7 +213,7 @@ compare_and_prompt_update() {
         log "${MSG_PREFIX}${MSG_USER_VALIDATION}"
         diff "$FILE1" "$FILE2"
         
-        QUESTION=$(printf "$QUESTION_FMT" "$MSG_PREFIX" "$FILE1" "$FILE2" | cat)
+        QUESTION=$(printf "$QUESTION_FMT" "$FILE1" "$FILE2" | cat)
         if ask_yes_no "$QUESTION"; then
             exit
             log "${MSG_PREFIX}${MSG_UPDAT_REQUESTED}"

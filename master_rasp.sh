@@ -239,7 +239,7 @@ change_partition_label_2_uuid_in_fstab() {
                          -m $ROOT_FS_MNTPT |               \
         change_fstab_row -l $SYSB_FS_LABEL                 \
                          -u "UUID=$SYSB_FS_UUID"           \
-                         -m $SYSB_FS_MNTPT                 > $FSTAB_TMP
+                         -m $SYSB_FS_MNTPT | column -t     > $FSTAB_TMP
     compare_and_prompt_update "$FSTAB" "$FSTAB_TMP" "$MSG_FSTAB_PREFIX"
 }
 

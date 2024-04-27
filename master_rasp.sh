@@ -7,6 +7,7 @@ OS_RELEASE="/etc/os-release"
 HW_MODEL="/sys/firmware/devicetree/base/model"
 CMD_LINE="/boot/firmware/cmdline.txt"
 CMD_LINE_TMP="/tmp/cmdline.txt"
+CUR_EEPROM_CONFIG="/tmp/current_bootloader_config"
 
 MSG_ERR_OS_DETECT="Unable to detect the operating system."
 MSG_ERR_NOT_LINUX="This script only works on Linux systems."
@@ -15,6 +16,24 @@ MSG_ERR_UNSUPPORTED_HW="This environment does not seem to be a Raspberry Pi."
 MSG_INFO_OS_SUPPORTED="Ubuntu 20.04 or newer detected."
 MSG_INFO_HW_SUPPORTED="Plateform detected:"
 MSG_INFO_BKP_FILE="Backup your system file:"
+
+MSG_CONFIG_OK="Current configuration validated. No update made."
+MSG_UPDATE_REQUIRED="Update is required."
+MSG_USER_VALIDATION="Do you want to update ?"
+MSG_UPDAT_REQUESTED="Update requested by user."
+MSG_USER_CANCELED="User canceled. No updates made."
+
+MSG_FSTAB_PREFIX="FSTAB: "
+MSG_CMDLINE_PREFIX="CMDLINE: "
+MSG_EEPROM_PREFIX="EEPROM CONFIG: "
+
+MSG_CMDLINE_ROOT_DEFINED="CMDLINE: Root is defined in $CMD_LINE."
+MSG_CMDLINE_ROOT_NOT_DEFINED="CMDLINE: Root is not defined in $CMD_LINE. Check your configuration."
+MSG_EEPROM_CONFIC_OK="${MSG_EEPROM_PREFIX}${MSG_CONFIG_OK}"
+MSG_EEPROM_UPDATE_REQUIRED="${MSG_EEPROM_PREFIX}${MSG_UPDATE_REQUIRED}"
+MSG_EEPROM_USER_VALIDATION="${MSG_EEPROM_PREFIX}${MSG_USER_VALIDATION}"
+MSG_EEPROM_USER_CANCELED="${MSG_EEPROM_PREFIX}${MSG_USER_CANCELED}"
+
 
 CONF_EEPROM="[all]
 BOOT_UART=0xf14
@@ -33,6 +52,7 @@ log() {
 
 ask_yes_no() {
     local QUESTION="$1"
+    
     while true; do
         printf "%s [Y/n] " "$QUESTION"
         read answer
@@ -63,7 +83,7 @@ check_env() {
     if [ -f $OS_RELEASE ]; then
         . $OS_RELEASE
         if [ "$ID" = "ubuntu" ] && [ "${VERSION_ID%.*}" -ge 20 ]; then
-            log $MSG_INFO_OS_SUPPORTED
+            log "$MSG_INFO_OS_SUPPORTED"
             MODEL=$(cat $HW_MODEL)
             if echo "$MODEL" | grep -q "Raspberry" ; then
             log "$MSG_INFO_HW_SUPPORTED $MODEL"
@@ -150,18 +170,19 @@ compare_and_prompt_update() {
     
     # Check if files are identical
     if diff "$FILE1" "$FILE2" > /dev/null 2>&1; then
-        log "${MSG_PREFIX}Current configuration validated. No update made."
+        log "${MSG_PREFIX}${MSG_CONFIG_OK}"
         return
     else
-        log "${MSG_PREFIX}Check the modifications !"
+        log "${MSG_PREFIX}${MSG_UPDATE_REQUIRED}"
+        log "${MSG_PREFIX}${MSG_USER_VALIDATION}"
         diff "$FILE1" "$FILE2"
         if ask_yes_no "${MSG_PREFIX}Do you want to update \"$FILE1\" with the content of \"$FILE2\" ?"; then
-            log "${MSG_PREFIX}Update requested by user."
+            log "${MSG_PREFIX}${MSG_UPDAT_REQUESTED}"
             backup_system_file $FILE1
             cp "$FILE2" "$FILE1"
             log "File \"$FILE1\" has been updated."
         else
-            log "${MSG_PREFIX}User canceled. No updates made."
+            log "${MSG_PREFIX}${MSG_USER_CANCELED}"
         fi
 
     fi
@@ -180,7 +201,7 @@ change_partition_label_2_uuid_in_fstab() {
         change_fstab_row -l "LABEL=system-boot" \
                          -u "UUID=$system_boot" \
                          -m '/boot/firmware' > $FSTAB_TMP
-    compare_and_prompt_update $FSTAB $FSTAB_TMP "FSTAB: "
+    compare_and_prompt_update "$FSTAB" "$FSTAB_TMP" "$MSG_FSTAB_PREFIX"
 }
 
 ###############################################################################
@@ -190,11 +211,11 @@ change_partition_uuid_in_cmdline() {
     local sep=$(cat $CMD_LINE | awk -F'root=' '{print $2}' | awk '{print $1}')
 
     if [ -n "$sep" ]; then
-        log "CMDLINE: Root is defined in $CMD_LINE."
+        log "$MSG_CMDLINE_ROOT_DEFINED"
         cat $CMD_LINE | sed "s/root=[^ ]*/root=PARTUUID=$root_fs/" > $CMD_LINE_TMP
-        compare_and_prompt_update $CMD_LINE $CMD_LINE_TMP "CMDLINE: "
+        compare_and_prompt_update $CMD_LINE $CMD_LINE_TMP $MSG_CMDLINE_PREFIX
     else
-        log "CMDLINE: Root is not defined in $CMD_LINE. Check your configuration."
+        log "$MSG_CMDLINE_ROOT_NOT_DEFINED"
     fi
 
 }
@@ -202,18 +223,17 @@ change_partition_uuid_in_cmdline() {
 ###############################################################################
 
 apply_eeprom_config() {
-    local CUR_EEPROM_CONFIG="/tmp/current_bootloader_config"
     echo "$CONF_EEPROM" > $CONF_EEPROM_TMP_FILE
     vcgencmd bootloader_config > $CUR_EEPROM_CONFIG
     if diff "$CONF_EEPROM_TMP_FILE" "$CUR_EEPROM_CONFIG" > /dev/null 2>&1; then
-        log "EEPROM CONFIG: Current configuration validated. No update made."
+        log "$MSG_EEPROM_CONFIC_OK"
     else
-        log "EEPROM CONFIG: Update is required."
+        log "$MSG_EEPROM_UPDATE_REQUIRED"
         diff "$CUR_EEPROM_CONFIG" "$CONF_EEPROM_TMP_FILE"
-        if ask_yes_no "EEPROM CONFIG: Do you want to update ?"; then
+        if ask_yes_no $MSG_EEPROM_USER_VALIDATION; then
             sudo rpi-eeprom-config --apply $CONF_EEPROM_TMP_FILE
         else
-            log "EEPROM CONFIG: User canceled. No update made."
+            log "$MSG_EEPROM_USER_CANCELED"
         fi
     fi
 }

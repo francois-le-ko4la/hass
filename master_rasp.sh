@@ -1,4 +1,29 @@
 #!/bin/sh
+#
+# DESCRIPTION:
+# This script sets up a raspberry pi4 to boot with external USB storage.
+#
+# DISCLAIMER:
+# This script is not supported under any support program or service. 
+# All scripts are provided AS IS without warranty of any kind. 
+# The author further disclaims all implied warranties including, without
+# limitation, any implied warranties of merchantability or of fitness for a
+# particular purpose. 
+# The entire risk arising out of the use or performance of the sample scripts
+# and documentation remains with you. 
+# In no event shall its authors, or anyone else involved in the creation,
+# production, or delivery of the scripts be liable for any damages whatsoever 
+# (including, without limitation, damages for loss of business profits, business
+# interruption, loss of business information, or other pecuniary loss) 
+# arising out of the use of or inability to use the sample scripts or documentation,
+# even if the author has been advised of the possibility of such damages.
+#
+# REQUIREMENTS:
+# - ubuntu 20.04+
+#
+# SETUP:
+#  sudo curl https://raw.githubusercontent.com/francois-le-ko4la/hass/main/master_rasp.sh | sudo sh
+#
 ###############################################################################
 
 FSTAB="/etc/fstab"
@@ -213,7 +238,7 @@ change_partition_uuid_in_cmdline() {
     if [ -n "$sep" ]; then
         log "$MSG_CMDLINE_ROOT_DEFINED"
         cat $CMD_LINE | sed "s/root=[^ ]*/root=PARTUUID=$root_fs/" > $CMD_LINE_TMP
-        compare_and_prompt_update $CMD_LINE $CMD_LINE_TMP $MSG_CMDLINE_PREFIX
+        compare_and_prompt_update $CMD_LINE $CMD_LINE_TMP "$MSG_CMDLINE_PREFIX"
     else
         log "$MSG_CMDLINE_ROOT_NOT_DEFINED"
     fi

@@ -90,6 +90,7 @@ ask_yes_no() {
     
     while true; do
         printf "%s [Y/n] " "$QUESTION"
+        echo "top"
         read answer
         case "$answer" in
             [Yy]*|"")

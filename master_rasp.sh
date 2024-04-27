@@ -86,7 +86,6 @@ log() {
 
 ask_yes_no() {
     local QUESTION="$1"
-    echo $QUESTION
     
     while true; do
         printf "%s [Y/n] " "$QUESTION"

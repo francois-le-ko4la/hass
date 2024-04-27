@@ -86,6 +86,8 @@ log() {
 
 ask_yes_no() {
     local QUESTION="$1"
+    echo $QUESTION
+    exit
     
     while true; do
         printf "%s [Y/n] " "$QUESTION"
@@ -201,6 +203,7 @@ compare_and_prompt_update() {
     local FILE1="$1"
     local FILE2="$2"
     local MSG_PREFIX="$3"
+    local QUESTION=""
     
     # Check if files are identical
     if diff "$FILE1" "$FILE2" > /dev/null 2>&1; then
@@ -212,6 +215,7 @@ compare_and_prompt_update() {
         diff "$FILE1" "$FILE2"
         
         QUESTION=$(printf "$QUESTION_FMT" "$MSG_PREFIX" "$FILE1" "$FILE2")
+        echo $QUESTION
         if ask_yes_no "$QUESTION"; then
             log "${MSG_PREFIX}${MSG_UPDAT_REQUESTED}"
             backup_system_file $FILE1

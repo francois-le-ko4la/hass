@@ -87,7 +87,6 @@ log() {
 ask_yes_no() {
     local QUESTION="$1"
     echo $QUESTION
-    exit
     
     while true; do
         printf "%s [Y/n] " "$QUESTION"
@@ -215,7 +214,6 @@ compare_and_prompt_update() {
         diff "$FILE1" "$FILE2"
         
         QUESTION=$(printf "$QUESTION_FMT" "$MSG_PREFIX" "$FILE1" "$FILE2")
-        echo $QUESTION
         if ask_yes_no "$QUESTION"; then
             exit
             log "${MSG_PREFIX}${MSG_UPDAT_REQUESTED}"

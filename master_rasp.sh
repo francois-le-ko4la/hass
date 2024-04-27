@@ -90,8 +90,8 @@ ask_yes_no() {
     
     while true; do
         printf "%s [Y/n] " "$QUESTION"
-        echo "top"
-        read answer
+        read -r answer
+        answer=$(echo "$answer" | tr -d '[:space:]')
         case "$answer" in
             [Yy]*|"")
                 return 0

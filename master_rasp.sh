@@ -215,7 +215,6 @@ compare_and_prompt_update() {
         
         QUESTION=$(printf "$QUESTION_FMT" "$FILE1" "$FILE2" | cat)
         if ask_yes_no "$QUESTION"; then
-            exit
             log "${MSG_PREFIX}${MSG_UPDAT_REQUESTED}"
             backup_system_file $FILE1
             cp "$FILE2" "$FILE1"

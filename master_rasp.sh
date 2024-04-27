@@ -239,17 +239,16 @@ change_partition_label_2_uuid_in_fstab() {
 ###############################################################################
 
 change_partition_uuid_in_cmdline() {
-    local root_fs=$(get_partuuid_from_label "writable")
-    local sep=$(cat $CMD_LINE | awk -F'root=' '{print $2}' | awk '{print $1}')
+    local ROOT_FS_PARTUUID=$(get_partuuid_from_label "$ROOT_FS_LABEL_SHORT")
+    local SEP=$(cat $CMD_LINE | awk -F'root=' '{print $2}' | awk '{print $1}')
 
-    if [ -n "$sep" ]; then
+    if [ -n "$SEP" ]; then
         log "$MSG_CMDLINE_ROOT_DEFINED"
-        cat $CMD_LINE | sed "s/root=[^ ]*/root=PARTUUID=$root_fs/" > $CMD_LINE_TMP
+        cat $CMD_LINE | sed "s/root=[^ ]*/root=PARTUUID=$ROOT_FS_PARTUUID/" > $CMD_LINE_TMP
         compare_and_prompt_update $CMD_LINE $CMD_LINE_TMP "$MSG_CMDLINE_PREFIX"
     else
         log "$MSG_CMDLINE_ROOT_NOT_DEFINED"
     fi
-
 }
 
 ###############################################################################

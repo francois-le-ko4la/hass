@@ -66,6 +66,8 @@ MSG_EEPROM_UPDATE_REQUIRED="${MSG_EEPROM_PREFIX}${MSG_UPDATE_REQUIRED}"
 MSG_EEPROM_USER_VALIDATION="${MSG_EEPROM_PREFIX}${MSG_USER_VALIDATION}"
 MSG_EEPROM_USER_CANCELED="${MSG_EEPROM_PREFIX}${MSG_USER_CANCELED}"
 
+QUESTION_FMT="%sDo you want to update \"%s\" with the content of \"%s\" ?"
+UPDT_FMT="File \"%s\" has been updated."
 
 CONF_EEPROM="[all]
 BOOT_UART=0xf14
@@ -208,11 +210,14 @@ compare_and_prompt_update() {
         log "${MSG_PREFIX}${MSG_UPDATE_REQUIRED}"
         log "${MSG_PREFIX}${MSG_USER_VALIDATION}"
         diff "$FILE1" "$FILE2"
-        if ask_yes_no "${MSG_PREFIX}Do you want to update \"$FILE1\" with the content of \"$FILE2\" ?"; then
+        
+        QUESTION=$(printf "$QUESTION_FMT" "$MSG_PREFIX" "$FILE1" "$FILE2")
+        if ask_yes_no "$QUESTION"; then
             log "${MSG_PREFIX}${MSG_UPDAT_REQUESTED}"
             backup_system_file $FILE1
             cp "$FILE2" "$FILE1"
-            log "File \"$FILE1\" has been updated."
+            MSG=$(printf "$UPDT_FMT" $FILE1)
+            log "$MSG"
         else
             log "${MSG_PREFIX}${MSG_USER_CANCELED}"
         fi

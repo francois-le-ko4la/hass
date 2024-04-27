@@ -34,6 +34,13 @@ CMD_LINE="/boot/firmware/cmdline.txt"
 CMD_LINE_TMP="/tmp/cmdline.txt"
 CUR_EEPROM_CONFIG="/tmp/current_bootloader_config"
 
+ROOT_FS_LABEL_SHORT="writable"
+ROOT_FS_LABEL="LABEL=$ROOT_FS_LABEL_SHORT"
+ROOT_FS_MNTPT='/'
+SYSB_FS_LABEL_SHORT="system-boot"
+SYSB_FS_LABEL="LABEL=$SYSB_FS_LABEL_SHORT"
+SYSB_FS_MNTPT='/boot/firmware'
+
 MSG_ERR_OS_DETECT="Unable to detect the operating system."
 MSG_ERR_NOT_LINUX="This script only works on Linux systems."
 MSG_ERR_UNSUPPORTED_VERSION="Unsupported Ubuntu version. Exiting..."
@@ -216,16 +223,16 @@ compare_and_prompt_update() {
 ###############################################################################
 
 change_partition_label_2_uuid_in_fstab() {
-    local root_fs=$(get_uuid_from_label "writable")
-    local system_boot=$(get_uuid_from_label "system-boot")
+    local ROOT_FS_UUID=$(get_uuid_from_label "$ROOT_FS_LABEL_SHORT")
+    local SYSB_FS_UUID=$(get_uuid_from_label "$SYSB_FS_LABEL_SHORT")
 
-    cat "$FSTAB" |                              \
-        change_fstab_row -l "LABEL=writable"    \
-                         -u "UUID=$root_fs"     \
-                         -m '/' |               \
-        change_fstab_row -l "LABEL=system-boot" \
-                         -u "UUID=$system_boot" \
-                         -m '/boot/firmware' > $FSTAB_TMP
+    cat "$FSTAB" |                                         \
+        change_fstab_row -l $ROOT_FS_LABEL                 \
+                         -u "UUID=$ROOT_FS_UUID"           \
+                         -m $ROOT_FS_MNTPT |               \
+        change_fstab_row -l $SYSB_FS_LABEL                 \
+                         -u "UUID=$SYSB_FS_UUID"           \
+                         -m $SYSB_FS_MNTPT                 > $FSTAB_TMP
     compare_and_prompt_update "$FSTAB" "$FSTAB_TMP" "$MSG_FSTAB_PREFIX"
 }
 

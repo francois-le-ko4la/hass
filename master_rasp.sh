@@ -24,6 +24,50 @@
 # SETUP:
 #  sudo curl https://raw.githubusercontent.com/francois-le-ko4la/hass/main/master_rasp.sh | sudo sh
 #
+# Example:
+#  sudo curl https://raw.githubusercontent.com/francois-le-ko4la/hass/main/master_rasp.sh | sudo sh
+# [sudo] password for ko4la:
+#   % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+#                                  Dload  Upload   Total   Spent    Left  Speed
+# 100  9247  100  9247    0     0  29514      0 --:--:-- --:--:-- --:--:-- 29637
+# 2024-04-28T00:50:27+02:00 - Master RASP - Ubuntu 20.04 or newer detected.
+# 2024-04-28T00:50:27+02:00 - Master RASP - Plateform detected: Raspberry Pi 4 Model B Rev 1.4
+# 2024-04-28T00:50:27+02:00 - Master RASP - FSTAB: Update is required.
+# 2024-04-28T00:50:27+02:00 - Master RASP - FSTAB: Do you want to update ?
+# 1,5c1,5
+# < # UNCONFIGURED FSTAB FOR BASE SYSTEM
+# < LABEL=writable    /     ext4    defaults,noatime,discard,x-systemd.growfs    0 0
+# < LABEL=system-boot       /boot/firmware  vfat    defaults        0       1
+# < tmpfs /var/cache/apt/archives tmpfs defaults,noexec,nosuid,nodev,mode=0755 0 0
+# < tmpfs /media/ramdisk  tmpfs   defaults,noatime,mode=1777 0 0
+# ---
+# > #                                          UNCONFIGURED             FSTAB  FOR                                        BASE  SYSTEM
+# > UUID=aaaaaaaa-bbbb-cccc-cccc-dddddddddddd  /                        ext4   defaults,noatime,discard,x-systemd.growfs  0     0
+# > UUID=YYYY-ZZZZ                             /boot/firmware           vfat   defaults                                   0     1
+# > tmpfs                                      /var/cache/apt/archives  tmpfs  defaults,noexec,nosuid,nodev,mode=0755     0     0
+# > tmpfs                                      /media/ramdisk           tmpfs  defaults,noatime,mode=1777                 0     0
+# Do you want to update "/etc/fstab" with the content of "/tmp/fstab" ? [Y/n] Y
+# 2024-04-28T00:51:11+02:00 - Master RASP - FSTAB: Update requested by user.
+# 2024-04-28T00:51:11+02:00 - Master RASP - Backup your system file: /etc/fstab.202404280051
+# 2024-04-28T00:51:11+02:00 - Master RASP - File "/etc/fstab" has been updated.
+# 2024-04-28T00:51:11+02:00 - Master RASP - CMDLINE: Root is defined in /boot/firmware/cmdline.txt.
+# 2024-04-28T00:51:11+02:00 - Master RASP - CMDLINE: Update is required.
+# 2024-04-28T00:51:11+02:00 - Master RASP - CMDLINE: Do you want to update ?
+# 1c1
+# < dwc_otg.lpm_enable=0 console=tty1 root=LABEL=writable rootfstype=ext4 elevator=deadline rootwait fixrtc quiet splash
+# ---
+# > dwc_otg.lpm_enable=0 console=tty1 root=PARTUUID=XXXXXXXX-02 rootfstype=ext4 elevator=deadline rootwait fixrtc quiet splash
+# Do you want to update "/boot/firmware/cmdline.txt" with the content of "/tmp/cmdline.txt" ? [Y/n] Y
+# 2024-04-28T00:51:38+02:00 - Master RASP - CMDLINE: Update requested by user.
+# 2024-04-28T00:51:39+02:00 - Master RASP - Backup your system file: /boot/firmware/cmdline.txt.202404280051
+# 2024-04-28T00:51:39+02:00 - Master RASP - File "/boot/firmware/cmdline.txt" has been updated.
+# 2024-04-28T00:51:39+02:00 - Master RASP - EEPROM CONFIG: Update is required.
+# 2c2
+# < BOOT_UART=0
+# ---
+# > BOOT_UART=0xf14
+# EEPROM [Y/n] n
+# 2024-04-28T00:51:59+02:00 - Master RASP - EEPROM CONFIG: User canceled. No updates made.
 ###############################################################################
 
 FSTAB="/etc/fstab"

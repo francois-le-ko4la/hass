@@ -214,7 +214,7 @@ compare_and_prompt_update() {
         log "${MSG_PREFIX}${MSG_USER_VALIDATION}"
         diff "$FILE1" "$FILE2"
         
-        QUESTION=$(printf "$QUESTION_FMT" "$MSG_PREFIX" "$FILE1" "$FILE2")
+        QUESTION=$(printf "$QUESTION_FMT" "$MSG_PREFIX" "$FILE1" "$FILE2" | cat)
         if ask_yes_no "$QUESTION"; then
             exit
             log "${MSG_PREFIX}${MSG_UPDAT_REQUESTED}"

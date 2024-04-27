@@ -89,7 +89,7 @@ ask_yes_no() {
     
     while true; do
         printf "%s [Y/n] " "$QUESTION"
-        read -r answer
+        read -r answer </dev/tty
         answer=$(echo "$answer" | tr -d '[:space:]')
         case "$answer" in
             [Yy]*|"")

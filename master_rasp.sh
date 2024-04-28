@@ -88,7 +88,7 @@ SYSB_FS_MNTPT='/boot/firmware'
 EEPROM_STABLE_BIN_PATH="/lib/firmware/raspberrypi/bootloader-2711/stable"
 EEPROM_BINFILE="pieeprom-2024-04-17.bin"
 EEPROM_GH_BINFILE="https://github.com/raspberrypi/rpi-eeprom/raw/master/firmware-2711/latest/$EEPROM_BINFILE"
-EEPROM_DEF_VERSION="CURRENT: Wed Apr 17 12:51:36 UTC 2024"
+EEPROM_DEF_VERSION="1713358296"
 
 
 MSG_ERR_OS_DETECT="Unable to detect the operating system."

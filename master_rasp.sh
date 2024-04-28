@@ -346,7 +346,7 @@ update_eeprom() {
     else
         log "$MSG_EEPROM_BINNOTFOUND"
         log "$MSG_EEPROM_DOWNLD_BIN"
-        wget -P $EEPROM_STABLE_BIN_PATH $EEPROM_GH_BINFILE
+        wget -P $EEPROM_STABLE_BIN_PATH $EEPROM_GH_BINFILE > /dev/null 2>&1
     fi
     if rpi-eeprom-update | grep "$EEPROM_DEF_VERSION" > /dev/null 2>&1 ; then
         log "$MSG_EEPROM_UPTD"

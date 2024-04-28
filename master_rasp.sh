@@ -121,6 +121,8 @@ MSG_EEPROM_BINFOUND="${MSG_EEPROM_PREFIX}BIN file already exists."
 MSG_EEPROM_UPTD="${MSG_EEPROM_PREFIX}ROM is up to date."
 MSG_EEPROM_UPD_IN_PROG="${MSG_EEPROM_PREFIX}ROM update in progress."
 MSG_EEPROM_UPDATED="${MSG_EEPROM_PREFIX}ROM updated."
+MSG_EEPROM_DOWNLDED="${MSG_EEPROM_PREFIX}BIN file downloaded successfully."
+MSG_EEPROM_DOWNLD_FAILED="${MSG_EEPROM_PREFIX}Unable to download BIN file. exit..."
 
 QUESTION_FMT="Do you want to update \"%s\" with the content of \"%s\" ?"
 UPDT_FMT="File \"%s\" has been updated."
@@ -346,7 +348,12 @@ update_eeprom() {
     else
         log "$MSG_EEPROM_BINNOTFOUND"
         log "$MSG_EEPROM_DOWNLD_BIN"
-        wget -P $EEPROM_STABLE_BIN_PATH $EEPROM_GH_BINFILE > /dev/null 2>&1
+        if wget -P $EEPROM_STABLE_BIN_PATH $EEPROM_GH_BINFILE > /dev/null 2>&1 ; then
+            log "$MSG_EEPROM_DOWNLDED"
+        else
+            log "$MSG_EEPROM_DOWNLD_FAILED"
+            exit 1
+        fi
     fi
     if rpi-eeprom-update | grep "$EEPROM_DEF_VERSION" > /dev/null 2>&1 ; then
         log "$MSG_EEPROM_UPTD"

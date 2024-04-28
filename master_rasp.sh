@@ -22,10 +22,10 @@
 # - ubuntu 20.04+
 #
 # SETUP:
-#  sudo curl https://raw.githubusercontent.com/francois-le-ko4la/hass/main/master_rasp.sh | sudo sh
+#   curl https://raw.githubusercontent.com/francois-le-ko4la/hass/main/master_rasp.sh | sudo sh
 #
 # Example:
-#  sudo curl https://raw.githubusercontent.com/francois-le-ko4la/hass/main/master_rasp.sh | sudo sh
+#  curl https://raw.githubusercontent.com/francois-le-ko4la/hass/main/master_rasp.sh | sudo sh
 # [sudo] password for ko4la:
 #   % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
 #                                  Dload  Upload   Total   Spent    Left  Speed

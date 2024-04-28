@@ -85,6 +85,12 @@ SYSB_FS_LABEL_SHORT="system-boot"
 SYSB_FS_LABEL="LABEL=$SYSB_FS_LABEL_SHORT"
 SYSB_FS_MNTPT='/boot/firmware'
 
+EEPROM_STABLE_BIN_PATH="/lib/firmware/raspberrypi/bootloader-2711/stable"
+EEPROM_BINFILE="pieeprom-2024-04-17.bin"
+EEPROM_GH_BINFILE="https://github.com/raspberrypi/rpi-eeprom/raw/master/firmware-2711/latest/$EEPROM_BINFILE"
+EEPROM_DEF_VERSION="CURRENT: Wed Apr 17 12:51:36 UTC 2024"
+
+
 MSG_ERR_OS_DETECT="Unable to detect the operating system."
 MSG_ERR_NOT_LINUX="This script only works on Linux systems."
 MSG_ERR_UNSUPPORTED_VERSION="Unsupported Ubuntu version. Exiting..."
@@ -103,12 +109,18 @@ MSG_FSTAB_PREFIX="FSTAB: "
 MSG_CMDLINE_PREFIX="CMDLINE: "
 MSG_EEPROM_PREFIX="EEPROM CONFIG: "
 
-MSG_CMDLINE_ROOT_DEFINED="CMDLINE: Root is defined in $CMD_LINE."
-MSG_CMDLINE_ROOT_NOT_DEFINED="CMDLINE: Root is not defined in $CMD_LINE. Check your configuration."
+MSG_CMDLINE_ROOT_DEFINED="${MSG_CMDLINE_PREFIX}Root is defined in $CMD_LINE."
+MSG_CMDLINE_ROOT_NOT_DEFINED="${MSG_CMDLINE_PREFIX}Root is not defined in $CMD_LINE. Check your configuration."
 MSG_EEPROM_CONFIC_OK="${MSG_EEPROM_PREFIX}${MSG_CONFIG_OK}"
 MSG_EEPROM_UPDATE_REQUIRED="${MSG_EEPROM_PREFIX}${MSG_UPDATE_REQUIRED}"
 MSG_EEPROM_USER_VALIDATION="${MSG_EEPROM_PREFIX}${MSG_USER_VALIDATION}"
 MSG_EEPROM_USER_CANCELED="${MSG_EEPROM_PREFIX}${MSG_USER_CANCELED}"
+MSG_EEPROM_BINNOTFOUND="${MSG_EEPROM_PREFIX}BIN file not found."
+MSG_EEPROM_DOWNLD_BIN="${MSG_EEPROM_PREFIX}downloadding BIN file..."
+MSG_EEPROM_BINFOUND="${MSG_EEPROM_PREFIX}BIN file already exists."
+MSG_EEPROM_UPTD="${MSG_EEPROM_PREFIX}ROM is up to date."
+MSG_EEPROM_UPD_IN_PROG="${MSG_EEPROM_PREFIX}ROM update in progress."
+MSG_EEPROM_UPDATED="${MSG_EEPROM_PREFIX}ROM updated."
 
 QUESTION_FMT="Do you want to update \"%s\" with the content of \"%s\" ?"
 UPDT_FMT="File \"%s\" has been updated."
@@ -152,6 +164,12 @@ ask_yes_no() {
 ###############################################################################
 
 check_env() {
+    # Check the user
+    if [ "$(id -u)" -ne 0 ]; then
+        log "Please run this script as root or using sudo!"
+        exit 1
+    fi
+    
     # Check if the platform is Linux
     if [ "$(uname)" != "Linux" ]; then
         log "$MSG_ERR_NOT_LINUX"
@@ -230,14 +248,14 @@ change_fstab_row() {
 
 get_uuid_from_label() {
     CUR_LABEL=$1
-    echo $(sudo blkid | grep $CUR_LABEL | grep -oP ' UUID="\K[^"]+')
+    echo $(blkid | grep $CUR_LABEL | grep -oP ' UUID="\K[^"]+')
 }
 
 ###############################################################################
 
 get_partuuid_from_label() {
     CUR_LABEL=$1
-    echo $(sudo blkid | grep $CUR_LABEL | grep -oP ' PARTUUID="\K[^"]+')
+    echo $(blkid | grep $CUR_LABEL | grep -oP ' PARTUUID="\K[^"]+')
 }
 
 ###############################################################################
@@ -313,7 +331,7 @@ apply_eeprom_config() {
         log "$MSG_EEPROM_UPDATE_REQUIRED"
         diff "$CUR_EEPROM_CONFIG" "$CONF_EEPROM_TMP_FILE"
         if ask_yes_no $MSG_EEPROM_USER_VALIDATION; then
-            sudo rpi-eeprom-config --apply $CONF_EEPROM_TMP_FILE
+            rpi-eeprom-config --apply $CONF_EEPROM_TMP_FILE
         else
             log "$MSG_EEPROM_USER_CANCELED"
         fi
@@ -322,11 +340,30 @@ apply_eeprom_config() {
 
 ###############################################################################
 
+update_eeprom() {
+    if [ -f "$EEPROM_STABLE_BIN_PATH/$EEPROM_BINFILE" ]; then
+        log "$MSG_EEPROM_BINFOUND"
+    else
+        log "$MSG_EEPROM_BINNOTFOUND"
+        log "$MSG_EEPROM_DOWNLD_BIN"
+        wget -P $EEPROM_STABLE_BIN_PATH $EEPROM_GH_BINFILE
+    fi
+    if rpi-eeprom-update | grep "$EEPROM_DEF_VERSION" > /dev/null 2>&1 ; then
+        log "$MSG_EEPROM_UPTD"
+    else
+        log "$MSG_EEPROM_UPD_IN_PROG"
+        rpi-eeprom-update -f "$EEPROM_STABLE_BIN_PATH/$EEPROM_BINFILE"
+        log "$MSG_EEPROM_UPDATED"
+    fi
+}
+
+###############################################################################
 
 # Main
 check_env
 change_partition_label_2_uuid_in_fstab
 change_partition_uuid_in_cmdline
 apply_eeprom_config
+update_eeprom
 
 exit

@@ -250,14 +250,14 @@ change_fstab_row() {
 
 get_uuid_from_label() {
     CUR_LABEL=$1
-    echo $(blkid | grep $CUR_LABEL | grep -oP ' UUID="\K[^"]+')
+    echo $(blkid -s UUID -o value $(blkid --label $CUR_LABEL))
 }
 
 ###############################################################################
 
 get_partuuid_from_label() {
     CUR_LABEL=$1
-    echo $(blkid | grep $CUR_LABEL | grep -oP ' PARTUUID="\K[^"]+')
+    echo $(blkid -s PARTUUID -o value $(blkid --label $CUR_LABEL))
 }
 
 ###############################################################################

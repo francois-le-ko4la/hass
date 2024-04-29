@@ -328,7 +328,7 @@ change_partition_uuid_in_cmdline() {
     local SEP=$(cat $CMD_LINE | awk -F'root=' '{print $2}' | awk '{print $1}')
 
     if [ -n "$SEP" ]; then
-        log "$MSG_CMDLINE_ROOT_DEFINED"
+        log "$INFO" "$MSG_CMDLINE_ROOT_DEFINED"
         cat $CMD_LINE | sed "s/root=[^ ]*/root=PARTUUID=$ROOT_FS_PARTUUID/" > $CMD_LINE_TMP
         compare_and_prompt_update $CMD_LINE $CMD_LINE_TMP "$MSG_CMDLINE_PREFIX"
     else

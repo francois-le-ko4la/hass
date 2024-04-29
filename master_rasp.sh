@@ -127,7 +127,7 @@ MSG_EEPROM_UPDATED="${MSG_EEPROM_PREFIX}ROM updated."
 MSG_EEPROM_DOWNLDED="${MSG_EEPROM_PREFIX}BIN file downloaded successfully."
 MSG_EEPROM_DOWNLD_FAILED="${MSG_EEPROM_PREFIX}Unable to download BIN file. exit..."
 
-MSG_ERR_COMPO_NOT_FOUND="[Error] - Please install \"%s\" first"
+MSG_ERR_COMPO_NOT_FOUND="Please install \"%s\" first"
 
 QUESTION_FMT="Do you want to update \"%s\" with the content of \"%s\" ?"
 UPDT_FMT="File \"%s\" has been updated."

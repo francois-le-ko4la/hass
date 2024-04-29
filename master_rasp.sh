@@ -206,7 +206,8 @@ check_env() {
     for cmd in $CMD_LIST
     do
         err_message=$(printf "$MSG_ERR_COMPO_NOT_FOUND" "$cmd")
-        command -v $cmd > /dev/null 2>&1 || { log "$err_message"; exit 1; }    done
+        command -v $cmd > /dev/null 2>&1 || { log "$err_message"; exit 1; }
+    done
 }
 
 ###############################################################################

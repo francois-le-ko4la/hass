@@ -142,7 +142,9 @@ CONF_EEPROM_TMP_FILE="/tmp/boot.conf"
 ###############################################################################
 
 log() {
-    echo "$(date --iso-8601=seconds) - Master RASP - $1"
+    local SEV="$1"
+    local MSG="$2"
+    echo "$(date --iso-8601=seconds) - Master RASP - $SEV - $MSG"
 }
 
 ###############################################################################

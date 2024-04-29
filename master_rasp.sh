@@ -204,8 +204,8 @@ check_env() {
     # check command
     for cmd in blkid diff awk vcgencmd rpi-eeprom-config rpi-eeprom-update
     do
-        command -v blkid > /dev/null 2>&1 || { log $(printf "$MSG_ERR_COMPO_NOT_FOUND" "blkid"); exit 1; }
-    done
+        err_message=$(printf "$MSG_ERR_COMPO_NOT_FOUND" "$cmd")
+        command -v $cmd > /dev/null 2>&1 || { log "$err_message"; exit 1; }    done
 }
 
 ###############################################################################
@@ -285,7 +285,7 @@ compare_and_prompt_update() {
         log "${MSG_PREFIX}${MSG_USER_VALIDATION}"
         diff "$FILE1" "$FILE2"
         
-        QUESTION=$(printf "$QUESTION_FMT" "$FILE1" "$FILE2" | cat)
+        QUESTION=$(printf "$QUESTION_FMT" "$FILE1" "$FILE2")
         if ask_yes_no "$QUESTION"; then
             log "${MSG_PREFIX}${MSG_UPDAT_REQUESTED}"
             backup_system_file $FILE1

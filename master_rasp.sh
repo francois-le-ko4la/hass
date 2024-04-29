@@ -77,6 +77,7 @@ HW_MODEL="/sys/firmware/devicetree/base/model"
 CMD_LINE="/boot/firmware/cmdline.txt"
 CMD_LINE_TMP="/tmp/cmdline.txt"
 CUR_EEPROM_CONFIG="/tmp/current_bootloader_config"
+CMD_LIST="blkid diff awk vcgencmd rpi-eeprom-config rpi-eeprom-update"
 
 ROOT_FS_LABEL_SHORT="writable"
 ROOT_FS_LABEL="LABEL=$ROOT_FS_LABEL_SHORT"
@@ -202,7 +203,7 @@ check_env() {
     fi
 
     # check command
-    for cmd in blkid diff awk vcgencmd rpi-eeprom-config rpi-eeprom-update
+    for cmd in $CMD_LIST
     do
         err_message=$(printf "$MSG_ERR_COMPO_NOT_FOUND" "$cmd")
         command -v $cmd > /dev/null 2>&1 || { log "$err_message"; exit 1; }    done

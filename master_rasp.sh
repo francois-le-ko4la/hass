@@ -91,6 +91,8 @@ EEPROM_BINFILE="pieeprom-2024-04-17.bin"
 EEPROM_GH_BINFILE="https://github.com/raspberrypi/rpi-eeprom/raw/master/firmware-2711/latest/$EEPROM_BINFILE"
 EEPROM_DEF_VERSION="1713358296"
 
+INFO="INFO"
+ERROR="ERROR"
 
 MSG_ERR_OS_DETECT="Unable to detect the operating system."
 MSG_ERR_NOT_LINUX="This script only works on Linux systems."
@@ -171,13 +173,13 @@ ask_yes_no() {
 check_env() {
     # Check the user
     if [ "$(id -u)" -ne 0 ]; then
-        log "Please run this script as root or using sudo!"
+        log "$ERROR" "Please run this script as root or using sudo!"
         exit 1
     fi
     
     # Check if the platform is Linux
     if [ "$(uname)" != "Linux" ]; then
-        log "$MSG_ERR_NOT_LINUX"
+        log "$ERROR" "$MSG_ERR_NOT_LINUX"
         exit 1
     fi
 
@@ -185,20 +187,20 @@ check_env() {
     if [ -f $OS_RELEASE ]; then
         . $OS_RELEASE
         if [ "$ID" = "ubuntu" ] && [ "${VERSION_ID%.*}" -ge 20 ]; then
-            log "$MSG_INFO_OS_SUPPORTED"
+            log "$INFO" "$MSG_INFO_OS_SUPPORTED"
             MODEL=$(cat $HW_MODEL)
             if echo "$MODEL" | grep -q "Raspberry" ; then
-            log "$MSG_INFO_HW_SUPPORTED $MODEL"
+            log "$INFO" "$MSG_INFO_HW_SUPPORTED $MODEL"
         else
-            log "$MSG_ERR_UNSUPPORTED_HW"
+            log "$ERROR" "$MSG_ERR_UNSUPPORTED_HW"
             exit 1
         fi
         else
-            log "$MSG_ERR_UNSUPPORTED_VERSION"
+            log "$ERROR" "$MSG_ERR_UNSUPPORTED_VERSION"
             exit 1
         fi
     else
-        log "$MSG_ERR_OS_DETECT"
+        log "$ERROR" "$MSG_ERR_OS_DETECT"
         exit 1
     fi
 
@@ -206,7 +208,7 @@ check_env() {
     for cmd in $CMD_LIST
     do
         err_message=$(printf "$MSG_ERR_COMPO_NOT_FOUND" "$cmd")
-        command -v $cmd > /dev/null 2>&1 || { log "$err_message"; exit 1; }
+        command -v $cmd > /dev/null 2>&1 || { log "$ERROR" "$err_message"; exit 1; }
     done
 }
 
@@ -216,7 +218,7 @@ backup_system_file() {
     local FILE=$1
     local BKP_FILE="$1.$(date +'%Y%m%d%H%M')"
     cp $FILE $BKP_FILE
-    log "$MSG_INFO_BKP_FILE $BKP_FILE"
+    log "$INFO" "$MSG_INFO_BKP_FILE $BKP_FILE"
 }
 
 ###############################################################################
@@ -280,22 +282,22 @@ compare_and_prompt_update() {
     
     # Check if files are identical
     if diff "$FILE1" "$FILE2" > /dev/null 2>&1; then
-        log "${MSG_PREFIX}${MSG_CONFIG_OK}"
+        log "$INFO" "${MSG_PREFIX}${MSG_CONFIG_OK}"
         return
     else
-        log "${MSG_PREFIX}${MSG_UPDATE_REQUIRED}"
-        log "${MSG_PREFIX}${MSG_USER_VALIDATION}"
+        log "$INFO" "${MSG_PREFIX}${MSG_UPDATE_REQUIRED}"
+        log "$INFO" "${MSG_PREFIX}${MSG_USER_VALIDATION}"
         diff "$FILE1" "$FILE2"
         
         QUESTION=$(printf "$QUESTION_FMT" "$FILE1" "$FILE2")
         if ask_yes_no "$QUESTION"; then
-            log "${MSG_PREFIX}${MSG_UPDAT_REQUESTED}"
+            log "$INFO" "${MSG_PREFIX}${MSG_UPDAT_REQUESTED}"
             backup_system_file $FILE1
             cp "$FILE2" "$FILE1"
             MSG=$(printf "$UPDT_FMT" $FILE1)
-            log "$MSG"
+            log "$INFO" "$MSG"
         else
-            log "${MSG_PREFIX}${MSG_USER_CANCELED}"
+            log "$INFO" "${MSG_PREFIX}${MSG_USER_CANCELED}"
         fi
 
     fi
@@ -328,7 +330,7 @@ change_partition_uuid_in_cmdline() {
         cat $CMD_LINE | sed "s/root=[^ ]*/root=PARTUUID=$ROOT_FS_PARTUUID/" > $CMD_LINE_TMP
         compare_and_prompt_update $CMD_LINE $CMD_LINE_TMP "$MSG_CMDLINE_PREFIX"
     else
-        log "$MSG_CMDLINE_ROOT_NOT_DEFINED"
+        log "$INFO" "$MSG_CMDLINE_ROOT_NOT_DEFINED"
     fi
 }
 
@@ -338,14 +340,14 @@ apply_eeprom_config() {
     echo "$CONF_EEPROM" > $CONF_EEPROM_TMP_FILE
     vcgencmd bootloader_config > $CUR_EEPROM_CONFIG
     if diff "$CONF_EEPROM_TMP_FILE" "$CUR_EEPROM_CONFIG" > /dev/null 2>&1; then
-        log "$MSG_EEPROM_CONFIC_OK"
+        log "$INFO" "$MSG_EEPROM_CONFIC_OK"
     else
-        log "$MSG_EEPROM_UPDATE_REQUIRED"
+        log "$INFO" "$MSG_EEPROM_UPDATE_REQUIRED"
         diff "$CUR_EEPROM_CONFIG" "$CONF_EEPROM_TMP_FILE"
         if ask_yes_no $MSG_EEPROM_USER_VALIDATION; then
             rpi-eeprom-config --apply $CONF_EEPROM_TMP_FILE
         else
-            log "$MSG_EEPROM_USER_CANCELED"
+            log "$INFO" "$MSG_EEPROM_USER_CANCELED"
         fi
     fi
 }
@@ -354,23 +356,23 @@ apply_eeprom_config() {
 
 update_eeprom() {
     if [ -f "$EEPROM_STABLE_BIN_PATH/$EEPROM_BINFILE" ]; then
-        log "$MSG_EEPROM_BINFOUND"
+        log "$INFO" "$MSG_EEPROM_BINFOUND"
     else
-        log "$MSG_EEPROM_BINNOTFOUND"
-        log "$MSG_EEPROM_DOWNLD_BIN"
+        log "$INFO" "$MSG_EEPROM_BINNOTFOUND"
+        log "$INFO" "$MSG_EEPROM_DOWNLD_BIN"
         if wget -P $EEPROM_STABLE_BIN_PATH $EEPROM_GH_BINFILE > /dev/null 2>&1 ; then
-            log "$MSG_EEPROM_DOWNLDED"
+            log "$INFO" "$MSG_EEPROM_DOWNLDED"
         else
-            log "$MSG_EEPROM_DOWNLD_FAILED"
+            log "$ERROR" "$MSG_EEPROM_DOWNLD_FAILED"
             exit 1
         fi
     fi
     if rpi-eeprom-update | grep "$EEPROM_DEF_VERSION" > /dev/null 2>&1 ; then
-        log "$MSG_EEPROM_UPTD"
+        log "$INFO" "$MSG_EEPROM_UPTD"
     else
-        log "$MSG_EEPROM_UPD_IN_PROG"
+        log "$INFO" "$MSG_EEPROM_UPD_IN_PROG"
         rpi-eeprom-update -f "$EEPROM_STABLE_BIN_PATH/$EEPROM_BINFILE"
-        log "$MSG_EEPROM_UPDATED"
+        log "$INFO" "$MSG_EEPROM_UPDATED"
     fi
 }
 

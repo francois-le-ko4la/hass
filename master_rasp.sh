@@ -133,9 +133,10 @@ QUESTION_FMT="Do you want to update \"%s\" with the content of \"%s\" ?"
 UPDT_FMT="File \"%s\" has been updated."
 
 CONF_EEPROM="[all]
-BOOT_UART=0xf14
+BOOT_UART=0
 WAKE_ON_GPIO=1
 POWER_OFF_ON_HALT=0
+BOOT_ORDER=0xf14
 "
 CONF_EEPROM_TMP_FILE="/tmp/boot.conf"
 

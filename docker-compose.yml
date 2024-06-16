@@ -8,31 +8,43 @@ services:
     container_name: adguardhome
     image: adguard/adguardhome
     environment:
-      - TZ=$TIME_ZONE
+      - TZ=${TIME_ZONE}
     volumes:
-      - '/opt/adguard-home/work:/opt/adguardhome/work'
-      - '/opt/adguard-home/conf:/opt/adguardhome/conf'
-      - '/etc/letsencrypt:/etc/letsencrypt:ro'
+      - "${DOCKER_ROOT}/adguard-home/work:/opt/adguardhome/work"
+      - "${DOCKER_ROOT}/adguard-home/conf:/opt/adguardhome/conf"
+      - "/etc/letsencrypt:/etc/letsencrypt:ro"
     network_mode: host
     restart: always
     depends_on:
       - bind9
+    cap_add:
+      - NET_ADMIN
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.adguard.entrypoints=websecure"
+      - "traefik.http.routers.adguard.rule=Host(`adguardhome.${HOST}`)"
+      - "traefik.http.routers.adguard.tls=true"
+      - "traefik.http.routers.adguard.tls.certresolver=myresolver"
+      - "traefik.http.routers.adguard.middlewares=authelia@docker"
+      - "traefik.http.routers.adguard.service=adguard"
+      - "traefik.http.services.adguard.loadbalancer.server.port=3000"
+
   bind9:
     image: ubuntu/bind9:latest
     container_name: bind9
     environment:
       - BIND9_USER=root
-      - TZ=$TIME_ZONE
+      - TZ=${TIME_ZONE}
     networks:
       admin-net:
-        ipv4_address: 172.20.0.4
+        ipv4_address: 172.20.0.250
     expose:
       - 53/tcp
       - 53/udp
     volumes:
-      - '/opt/bind9/config:/etc/bind'
-      - '/opt/bind9/cache:/var/cache/bind'
-      - '/opt/bind9/records:/var/lib/bind'
+      - "${DOCKER_ROOT}/bind9/config:/etc/bind"
+      - "${DOCKER_ROOT}/bind9/cache:/var/cache/bind"
+      - "${DOCKER_ROOT}/bind9/records:/var/lib/bind"
     restart: always
     
   #############################################################################
@@ -42,56 +54,34 @@ services:
     image: containrrr/watchtower
     container_name: watchtower
     environment:
-      - TZ=$TIME_ZONE
-      - WATCHTOWER_SCHEDULE= 0 0 0 * */1 *
+      - TZ=${TIME_ZONE}
+      - WATCHTOWER_SCHEDULE=0 0 0 * */1 *
       - WATCHTOWER_CLEANUP=true
-      - WATCHTOWER_NOTIFICATIONS=gotify
-      - >-
-        WATCHTOWER_NOTIFICATION_GOTIFY_URL=https://$HOST:8143/
-      - WATCHTOWER_NOTIFICATION_GOTIFY_TOKEN=$GOTIFY_TOKEN
+      - WATCHTOWER_INCLUDE_STOPPED=true
+      - WATCHTOWER_REVIVE_STOPPED=false
+      - WATCHTOWER_NOTIFICATIONS=shoutrrr
+      - WATCHTOWER_NOTIFICATION_URL=${WATCHTOWER_NOTIFICATION_URL}
     volumes:
-      - '/var/run/docker.sock:/var/run/docker.sock'
+      - "/var/run/docker.sock:/var/run/docker.sock"
     networks: 
       admin-net:
         ipv4_address: 172.20.0.10
     restart: unless-stopped
-    
-  #############################################################################
-  # Certificats
-  #############################################################################
-  certbot:
-    container_name: certbot
-    image: 'certbot/dns-cloudflare:arm64v8-latest'
-    environment:
-      - TZ=$TIME_ZONE
-    command: >-
-      certonly --non-interactive --dns-cloudflare --dns-cloudflare-credentials
-        /opt/cloudflare/credentials --email $MAIL
-        --dns-cloudflare-propagation-seconds 15 --agree-tos
-        -d $HOST
-    volumes:
-      - '/opt/certbot/cloudflare:/opt/cloudflare'
-      - '/etc/letsencrypt:/etc/letsencrypt'
-      - '/var/log/letsencrypt:/var/log/letsencrypt'
-    networks:
-      admin-net:
-        ipv4_address: 172.20.0.20
         
   #############################################################################
   # HOME ASSISTANT
   #############################################################################
   home-assistant:
     container_name: home-assistant
-    #image: 'homeassistant/home-assistant:latest'
-    image: 'ghcr.io/home-assistant/home-assistant:stable'
+    image: homeassistant/home-assistant:latest
     volumes:
-      - '/opt/hass/home-assistant/config:/config'
-      - '/etc/letsencrypt:/etc/letsencrypt:ro'
-      - '/etc/localtime:/etc/localtime:ro'
-      - '/var/run/docker.sock:/var/run/docker.sock'
-      - '/run/dbus:/run/dbus:ro'
+      - "${HASS_ROOT}/home-assistant/config:/config"
+      - "/etc/letsencrypt:/etc/letsencrypt:ro"
+      - "/etc/localtime:/etc/localtime:ro"
+      - "/var/run/docker.sock:/var/run/docker.sock"
+      - "/run/dbus:/run/dbus:ro"
     environment:
-      - TZ=$TIME_ZONE
+      - TZ=${TIME_ZONE}
       - DISABLE_JEMALLOC=true
     restart: always
     network_mode: host
@@ -100,12 +90,13 @@ services:
       - mariadb
       - emqx
       - zigbee2mqtt
+
   mariadb:
     image: linuxserver/mariadb
     container_name: mariadb
     restart: unless-stopped
     environment:
-      - TZ=$TIME_ZONE
+      - TZ=${TIME_ZONE}
       - MYSQL_ROOT_PASSWORD=$MYSQL_ROOT_PASSWORD
       - MYSQL_DATABASE=$MYSQL_DATABASE
       - MYSQL_USER=$MYSQL_USER
@@ -113,12 +104,13 @@ services:
       - PUID=1000
       - PGID=1000
     volumes:
-      - '/opt/hass/mariadb:/config'
+      - "${HASS_ROOT}/mariadb:/config"
     networks:
       iot-net:
         ipv4_address: 172.21.0.2
-    ports:
-      - '3306:3306'
+    expose:
+      - '3306/tcp'
+
   emqx:
     image: emqx/emqx:latest
     container_name: emqx
@@ -129,30 +121,39 @@ services:
       - EMQX_DASHBOARD__DEFAULT_USERNAME=${EMQX_DASHBOARD__DEFAULT_USERNAME}
       - EMQX_DASHBOARD__DEFAULT_PASSWORD=${EMQX_DASHBOARD__DEFAULT_PASSWORD}
     volumes:
-      - '/opt/hass/emqx/data:/opt/emqx/data'
-      - '/opt/hass/emqx/log:/opt/emqx/log'
+      - "${HASS_ROOT}/emqx/data:/opt/emqx/data"
+      - "${HASS_ROOT}/emqx/log:/opt/emqx/log"
     networks:
       iot-net:
         ipv4_address: 172.21.0.3
       admin-net:
         ipv4_address: 172.20.0.11
-    ports:
-      - 1883:1883
-      - 8083:8083
-      - 8084:8084
-      - 8883:8883
     expose:
+      - 1883/tcp
+      - 8083/tcp
+      - 8084/tcp
+      - 8883/tcp
       - 18083/tcp
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=admin"
+      - "traefik.http.routers.emqx.entrypoints=websecure"
+      - "traefik.http.routers.emqx.rule=Host(`emqx.${HOST}`)"
+      - "traefik.http.routers.emqx.tls=true"
+      - "traefik.http.routers.emqx.tls.certresolver=myresolver"
+      - "traefik.http.routers.emqx.middlewares=authelia@docker"
+      - "traefik.http.services.emqx.loadbalancer.server.port=18083"
+
   zigbee2mqtt:
     container_name: zigbee2mqtt
-    image: 'koenkk/zigbee2mqtt:latest'
+    image: koenkk/zigbee2mqtt:latest
     #sometime image: 'koenkk/zigbee2mqtt:latest-dev' ^^
     privileged: true
     volumes:
-      - '/opt/hass/zigbee2mqtt/data:/app/data'
-      - '/run/udev:/run/udev:ro'
+      - "${HASS_ROOT}/zigbee2mqtt/data:/app/data"
+      - "/run/udev:/run/udev:ro"
     environment:
-      - TZ=$TIME_ZONE
+      - TZ=${TIME_ZONE}
     # - DEBUG=zigbee-herdsman* for debug
     devices:
       - >- 
@@ -162,15 +163,25 @@ services:
         ipv4_address: 172.21.0.4
       admin-net:
         ipv4_address: 172.20.0.9
-    ports:
-      - "8080:8080"
+    expose:
+      - "8080/tcp"
     restart: always
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=admin"
+      - "traefik.http.routers.z2mqtt.entrypoints=websecure"
+      - "traefik.http.routers.z2mqtt.rule=Host(`z2mqtt.${HOST}`)"
+      - "traefik.http.routers.z2mqtt.tls=true"
+      - "traefik.http.routers.z2mqtt.tls.certresolver=myresolver"
+      - "traefik.http.routers.z2mqtt.middlewares=authelia@docker"
+      - "traefik.http.services.z2mqtt.loadbalancer.server.port=8080"
+
   node-red:
     container_name: node-red
-    image: 'nodered/node-red:latest'
+    image: nodered/node-red:latest
     privileged: true
     environment:
-      - TZ=$TIME_ZONE
+      - TZ=${TIME_ZONE}
     networks:
       iot-net:
         ipv4_address: 172.21.0.5
@@ -179,70 +190,174 @@ services:
     expose:
       - '1880/tcp'
     volumes:
-      - '/opt/hass/node-red/data:/data'
+      - "${HASS_ROOT}/node-red/data:/data"
     depends_on:
       - home-assistant
     restart: always
-  nginx:
-    container_name: nginx
-    image: 'nginx:latest'
-    hostname: nginx
-    volumes:
-      - '/opt/nginx/config:/etc/nginx/conf.d'
-      - '/etc/letsencrypt:/etc/letsencrypt'
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=admin"
+      - "traefik.http.routers.nodered.entrypoints=websecure"
+      - "traefik.http.routers.nodered.rule=Host(`nodered.${HOST}`)"
+      - "traefik.http.routers.nodered.tls=true"
+      - "traefik.http.routers.nodered.tls.certresolver=myresolver"
+      - "traefik.http.routers.nodered.middlewares=authelia@docker"
+
+  ha-linky:
+    image: ha-linky
+    container_name: ha-linky
     environment:
-      - TZ=$TIME_ZONE
+      - SUPERVISOR_TOKEN=${SUPERVISOR_TOKEN}
+      - WS_URL=wss://${HOST}:8123/api/websocket
+    networks:
+      iot-net:
+        ipv4_address: 172.21.0.6
+    volumes:
+      - "${HASS_ROOT}/ha-linky:/data"
+    labels:
+      - "com.centurylinklabs.watchtower.enable=false"
+
+  #############################################################################
+  # Traefik
+  #############################################################################
+
+  traefik:
+    container_name: traefik
+    image: traefik:latest
+    command:
+      - --api.insecure=true
+      - --providers.docker=true
+      - --entrypoints.web.address=:80
+      - --entrypoints.websecure.address=:6643
+        #- --providers.docker.network=admin
+      - --providers.docker.exposedByDefault=false
+      - --serverstransport.insecureskipverify=true
+      - --certificatesresolvers.myresolver.acme.dnschallenge=true
+      - --certificatesresolvers.myresolver.acme.dnschallenge.provider=cloudflare
+      - --certificatesresolvers.myresolver.acme.email=francois@le.ko4la.fr
+      - --certificatesresolvers.myresolver.acme.storage=/letsencrypt/acme.json
+      - --log.level=INFO
     networks:
       admin-net:
         ipv4_address: 172.20.0.2
     ports:
-      - '443:443/tcp'
-      - '51821:51821/tcp'
-      - '8100:8100/tcp'
-      - '8200:8200/tcp'
-      - '9443:9443/tcp'
-      - '8143:8143/tcp'
-      - '9080:9080/tcp'
-      - '1880:1880/tcp'
-      - '18083:18083/tcp'
-    depends_on:
-      - portainer
-      - gotify
-      - duplicati
-      - wg-easy
-      - node-red
-      - zigbee2mqtt
-      - emqx
-    restart: unless-stopped
-  portainer:
-    container_name: portainer
-    image: 'portainer/portainer-ee:latest'
+      - "6680:80"
+      - "6643:6643"
     volumes:
-      - '/var/run/docker.sock:/var/run/docker.sock'
-      - 'portainer_data:/data'
-    networks:
-      admin-net:
-        ipv4_address: 172.20.0.3
-    expose:
-      - 9443/tcp
-    restart: always
-  gotify:
-    container_name: gotify
-    image: gotify/server-arm64
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+      - "${DOCKER_ROOT}/traefik/letsencrypt:/letsencrypt"
+      - "/etc/timezone:/etc/timezone:ro"
+      - "/etc/localtime:/etc/localtime:ro"
+    environment:
+      - CF_DNS_API_TOKEN=${CLOUDFLARE_API_KEY}
+    extra_hosts: 
+      - host.docker.internal:172.17.0.1
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.traefik.rule=Host(`traefik.${HOST}`)"
+      - "traefik.http.routers.traefik.service=api@internal"
+      - "traefik.http.routers.traefik.entrypoints=websecure"
+      - "traefik.http.routers.traefik.tls.certresolver=myresolver"
+      - 'traefik.http.routers.traefik.middlewares=authelia@docker'
+      - "traefik.http.middlewares.redirect-to-https.redirectscheme.scheme=https"
+      - "traefik.http.routers.http-catchall.rule=hostregexp(`{host:.+}`)"
+      - "traefik.http.routers.http-catchall.entrypoints=web"
+      - "traefik.http.routers.http-catchall.middlewares=redirect-to-https"
+
+  traefik-acme-converter:
+    container_name: traefik-acme-converter
+    image: ko4la/traefik-acme-converter
+    environment:
+      - PROVIDER=acme
+      - WEBHOOK_URL=${TRAEFIK_ACME_DISCORD_WH}
+      - USER_UID=0
+      - USER_GID=0
+    volumes:
+      - ${DOCKER_ROOT}/traefik/letsencrypt:/traefik/letsencrypt:ro
+      - /etc/letsencrypt/live:/app/output
     networks:
       admin-net:
         ipv4_address: 172.20.0.6
-    expose:
-      - 80/tcp
-    environment:
-      - TZ=$TIME_ZONE
-      - GOTIFY_SERVER_SSL_ENABLED=false
+    labels:
+      - "com.centurylinklabs.watchtower.enable=false"
+
+  authelia:
+    image: authelia/authelia
+    container_name: authelia
     volumes:
-      - '/opt/gotify/data:/app/data'
+      - "${DOCKER_ROOT}/authelia/config:/config"
+    networks:
+      admin-net:
+        ipv4_address: 172.20.0.3
+    labels:
+      - 'traefik.enable=true'
+      - "traefik.docker.network=admin"
+      - 'traefik.http.routers.authelia.entrypoints=websecure'
+      - 'traefik.http.routers.authelia.rule=Host(`auth.${HOST}`)'
+      - 'traefik.http.routers.authelia.tls=true'
+      - 'traefik.http.routers.authelia.tls.certresolver=myresolver'
+      - 'traefik.http.middlewares.authelia.forwardauth.address=http://authelia:9091/api/authz/forward-auth'  # yamllint disable-line rule:line-length
+      - 'traefik.http.middlewares.authelia.forwardauth.trustForwardHeader=true'
+      - 'traefik.http.middlewares.authelia.forwardauth.authResponseHeaders=Remote-User,Remote-Groups,Remote-Name,Remote-Email'  # yamllint disable-line rule:line-length
+
+    expose:
+      - 9091
+    restart: unless-stopped
+    environment:
+      - TZ=${TIME_ZONE}
+
+  vscode:
+    container_name: vscode
+    image: linuxserver/code-server
+    restart: unless-stopped
+    networks:
+      admin-net:
+        ipv4_address: 172.20.0.20
+    expose: 
+      - 8443/tcp
+    volumes:
+      - "${DOCKER_ROOT}/vscode/config:/config"
+      - "${DOCKER_ROOT}:/config/workspace"
+    environment:
+      - PUID=0
+      - PGID=0
+      - TZ=${TIME_ZONE}
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=admin"
+      - "traefik.http.routers.vscode.entrypoints=websecure"
+      - "traefik.http.routers.vscode.rule=Host(`vscode.${HOST}`)"
+      - "traefik.http.routers.vscode.tls=true"
+      - "traefik.http.routers.vscode.tls.certresolver=myresolver"
+      - "traefik.http.routers.vscode.middlewares=authelia@docker"
+      
+  portainer:
+    container_name: portainer
+    image: portainer/portainer-ee:latest
+    volumes:
+      - "/etc/localtime:/etc/localtime:ro"
+      - "/var/run/docker.sock:/var/run/docker.sock"
+      - "portainer_data:/data"
+    networks:
+      admin-net:
+        ipv4_address: 172.20.0.4
+    expose:
+      - 9443/tcp
+      - 9000/tcp
+    command: --http-enabled --log-level DEBUG
     restart: always
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=admin"
+      - "traefik.http.routers.portainer.entrypoints=websecure"
+      - "traefik.http.routers.portainer.rule=Host(`portainer.${HOST}`)"
+      - "traefik.http.routers.portainer.tls=true"
+      - "traefik.http.routers.portainer.tls.certresolver=myresolver"
+      - "traefik.http.services.portainer.loadbalancer.server.port=9000"
+
   duplicati:
     container_name: duplicati
-    image: 'lscr.io/linuxserver/duplicati:latest'
+    image: lscr.io/linuxserver/duplicati:latest
     networks:
       admin-net:
         ipv4_address: 172.20.0.7
@@ -251,11 +366,20 @@ services:
     environment:
       - PUID=0
       - PGID=0
-      - TZ=$TIME_ZONE
+      - TZ=${TIME_ZONE}
     volumes:
-      - '/opt/duplicati/config:/config'
-      - '/:/source'
+      - "${DOCKER_ROOT}/duplicati/config:/config"
+      - "/:/source"
     restart: always
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=admin"
+      - "traefik.http.routers.duplicati.entrypoints=websecure"
+      - "traefik.http.routers.duplicati.rule=Host(`duplicati.${HOST}`)"
+      - "traefik.http.routers.duplicati.tls=true"
+      - "traefik.http.routers.duplicati.tls.certresolver=myresolver"
+      - "traefik.http.routers.duplicati.middlewares=authelia@docker"
+
   wg-easy:
     container_name: wg-easy
     image: weejewel/wg-easy
@@ -267,10 +391,9 @@ services:
     expose:
       - 51821/tcp
     environment:
-      - WG_HOST=$WG_HOST
-      - PASSWORD=$WG_PASSWORD
+      - WG_HOST=${WG_HOST}
     volumes:
-      - '/opt/wg-easy/config:/etc/wireguard'
+      - "${DOCKER_ROOT}/wg-easy/config:/etc/wireguard"
     cap_add:
       - NET_ADMIN
       - SYS_MODULE
@@ -278,6 +401,15 @@ services:
       - net.ipv4.conf.all.src_valid_mark=1
       - net.ipv4.ip_forward=1
     restart: always
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=admin"
+      - "traefik.http.routers.wg-easy.entrypoints=websecure"
+      - "traefik.http.routers.wg-easy.rule=Host(`wg-easy.${HOST}`)"
+      - "traefik.http.routers.wg-easy.tls=true"
+      - "traefik.http.routers.wg-easy.tls.certresolver=myresolver"
+      - "traefik.http.services.wg-easy.loadbalancer.server.port=51821"
+      - "traefik.http.routers.wg-easy.middlewares=authelia@docker"
 
 ###############################################################################
 # Volume
@@ -299,6 +431,7 @@ networks:
       config:
         - subnet: 172.20.0.0/16
           gateway: 172.20.0.1
+
   iot-net:
     name: "iot"
     driver: bridge

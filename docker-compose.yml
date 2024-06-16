@@ -267,8 +267,11 @@ services:
   traefik-acme-converter:
     container_name: traefik-acme-converter
     image: ko4la/traefik-acme-converter
+    # git clone https://github.com/francois-le-ko4la/traefik-acme-converter.git
+    # cd traefik-acme-converter
+    # docker build -t ko4la/traefik-acme-converter .
     environment:
-      - PROVIDER=acme
+      - PROVIDER_NAME=myresolver.acme
       - WEBHOOK_URL=${TRAEFIK_ACME_DISCORD_WH}
       - USER_UID=0
       - USER_GID=0

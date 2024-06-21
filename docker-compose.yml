@@ -29,7 +29,7 @@ services:
       - "traefik.http.routers.adguard.service=adguard"
       - "traefik.http.services.adguard.loadbalancer.server.port=3000"
     healthcheck:
-      test: "wget --no-verbose --tries=1 --spider http://localhost:3000 -o /dev/null && nslookup www.google.fr happyguardian.du.ko4la.fr > /dev/null || exit 1"
+      test: "wget --no-verbose --tries=1 --spider http://localhost:3000 -o /dev/null && nslookup www.google.fr $$HOST > /dev/null || exit 1"
     restart: unless-stopped
 
   bind9:
@@ -95,7 +95,7 @@ services:
       - emqx
       - zigbee2mqtt
     healthcheck:
-      test: "curl -fs https://happyguardian.du.ko4la.fr:8123/ -o /dev/null || exit 1"
+      test: "curl -fs https://$$HOST:8123/ -o /dev/null || exit 1"
     restart: unless-stopped
 
   mariadb:

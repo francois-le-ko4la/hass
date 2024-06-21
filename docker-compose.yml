@@ -95,7 +95,7 @@ services:
       - emqx
       - zigbee2mqtt
     healthcheck:
-      test: "curl -fs https://$$HOST:8123/ -o /dev/null || exit 1"
+      test: "curl https://localhost:8123/ -k -o /dev/null || exit 1"
     restart: unless-stopped
 
   mariadb:

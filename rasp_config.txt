@@ -3,69 +3,81 @@ kernel=vmlinuz
 cmdline=cmdline.txt
 initramfs initrd.img followkernel
 
-# Disable Bluetooth / WIFI...
+# Disable onboard Bluetooth and Wi-Fi (improves stability and reduces power use)
 dtoverlay=disable-bt
 dtoverlay=disable-wifi
-dtparam=nvme
-dtparam=pciex1_gen=2
 
-[pi4]
-arm_boost=1
-arm_64bit=1
-max_framebuffers=2
-arm_boost=1
+# Enable maximum USB current (required for some external SSDs/HDDs)
+# usb_max_current_enable=1
+# max_usb_current=1
 
-[all]
-# Enable the audio output, I2C and SPI interfaces on the GPIO header. As these
-# parameters related to the base device-tree they must appear *before* any
-# other dtoverlay= specification
+# Disable unused interfaces (enable later if needed)
 dtparam=audio=off
 dtparam=i2c_arm=off
 dtparam=spi=off
 
-# Comment out the following line if the edges of the desktop appear outside
-# the edges of your display
-disable_overscan=1
+# Disable continuous SD card polling (recommended for USB/SSD boot)
+dtparam=sd_poll_once=on
 
-# If you have issues with audio, you may try uncommenting the following line
-# which forces the HDMI output into HDMI mode instead of DVI (which doesn't
-# support audio output)
-#hdmi_drive=2
+# Splash off
+# disable_splash=1
 
-# Enable the serial pins
-#enable_uart=1
+# Force HDMI output even if no display is detected
+hdmi_force_hotplug=1
 
-# Autoload overlays for any recognized cameras or displays that are attached
-# to the CSI/DSI ports. Please note this is for libcamera support, *not* for
-# the legacy camera stack
+# Set HDMI resolution to 720p @ 60Hz (CEA standard)
+hdmi_group=1
+hdmi_mode=4
+
+# Framebuffer resolution (matches 720p)
+framebuffer_width=1280
+framebuffer_height=720
+
+# Remove black borders (disable overscan)
+# disable_overscan=1
+
+overscan_left=-16
+overscan_right=-16
+overscan_top=-16
+overscan_bottom=-16
+
+# Reduce HDMI activity when not in use (optional)
+hdmi_blanking=2
+
+# Set number of framebuffers (helps when using TTY over HDMI)
+max_framebuffers=2
+
+# Enable 64-bit mode
+arm_64bit=1
+
+# Optional: auto-detect camera/display over CSI/DSI
 #camera_auto_detect=1
 #display_auto_detect=1
 
-# Config settings specific to arm64
-arm_64bit=1
-dtoverlay=dwc2
+# Enable serial console (UART) - uncomment if needed
+#enable_uart=1
 
-# Enable the KMS ("full" KMS) graphics overlay, leaving GPU memory as the
-# default (the kernel is in control of graphics memory with full KMS)
-dtoverlay=vc4-kms-v3d
-disable_fw_kms_setup=1
+# Full KMS graphics driver not needed for headless setup
+#dtoverlay=vc4-fkms-v3d
+#disable_fw_kms_setup=1
+
+[pi4]
+# Enable official CPU frequency boost (1.8GHz on supported models)
+arm_boost=1
+# Set GPU memory to the minimum (more RAM available for the system)
+gpu_mem=16
+# Enable Ethernet Energy Efficient Ethernet (EEE) mode
+dtparam=eee=on
 
 [pi3+]
-# Use a smaller contiguous memory area, specifically on the 3A+ to avoid an
-# OOM oops on boot. The 3B+ is also affected by this section, but it shouldn't
-# cause any issues on that board
+# Fix for Out-of-Memory issue on Pi 3A+/3B+
 dtoverlay=vc4-kms-v3d,cma-128
 
 [pi02]
-# The Zero 2W is another 512MB board which is occasionally affected by the same
-# OOM oops on boot.
+# Fix for Zero 2 W (also 512MB RAM)
 dtoverlay=vc4-kms-v3d,cma-128
 
-[all]
-
 [cm4]
-# Enable the USB2 outputs on the IO board (assuming your CM4 is plugged into
-# such a board)
+# Enable USB ports on the CM4 IO Board
 dtoverlay=dwc2,dr_mode=host
 
-[all]

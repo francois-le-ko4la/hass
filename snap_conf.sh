@@ -25,6 +25,7 @@ cp /etc/lsb-release lsb-release
 cp /boot/firmware/cmdline.txt rasp_cmdline.txt
 cp /boot/firmware/config.txt rasp_config.txt
 cp /opt/docker-compose.yml docker-compose.yml
+cp /opt/hass/mariadb/custom.cnf mariadb_custom.cnf
 
 # Traitement du .env (masquer certaines valeurs)
 awk '
